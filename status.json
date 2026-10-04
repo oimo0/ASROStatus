@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-24T13:40:02.627230Z",
+  "services": [
+    {
+      "id": "asro-web",
+      "name": "ASRO Web",
+      "description": "ASRO公式サイト・Webサービス",
+      "state": "operational"
+    },
+    {
+      "id": "kuup",
+      "name": "Kuup",
+      "description": "AIチャット・関連機能",
+      "state": "operational"
+    },
+    {
+      "id": "cook",
+      "name": "Cook",
+      "description": "AIサイト制作機能",
+      "state": "outage"
+    },
+    {
+      "id": "schoollink",
+      "name": "SchoolLink",
+      "description": "学校情報共有サービス",
+      "state": "operational"
+    },
+    {
+      "id": "plat",
+      "name": "Plat",
+      "description": "ASRO共通基盤",
+      "state": "operational"
+    }
+  ]
+}
