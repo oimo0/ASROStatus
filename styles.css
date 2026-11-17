@@ -193,3 +193,17 @@ html[data-theme="light"] .brand-mark,html[data-theme="light"] .footer-brand img{
 .overview-card[data-status="paused"] .status-orb{color:#ffd391;background:rgba(241,173,76,.13);border-color:#8d6d36}
 .uptime-cell.paused,.legend-dot.paused{background:#d7aa73}
 .activity-dot.paused{background:var(--amber)}
+
+.server-history-block{margin-top:20px}
+.server-history-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin:0 0 15px;padding:0 2px}
+.server-history-heading h3{font-size:16px;font-weight:800;letter-spacing:-.04em;margin:0 0 5px}
+.server-history-heading p{font-size:11px;color:var(--muted);margin:0}
+.server-history-legend{display:flex;align-items:center;gap:13px;font-size:10px;color:var(--muted);white-space:nowrap}
+.server-history-legend span{display:flex;align-items:center;gap:6px}
+.server-history-row .history-name{display:flex;flex-direction:column;line-height:1.45;gap:3px}
+.server-history-row .history-name small{font-size:9px;font-weight:500;color:var(--faint)}
+@media(max-width:740px){
+.server-history-heading{align-items:flex-start;flex-direction:column}
+.server-history-legend{flex-wrap:wrap}
+.server-history-row .history-name small{font-size:8px}
+}

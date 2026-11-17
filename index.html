@@ -8,8 +8,8 @@
   <meta property="og:title" content="ASRO Status — システム稼働状況">
   <title>ASRO Status | 稼働状況</title>
   <link rel="icon" type="image/svg+xml" href="assets/asro-mark.svg">
-  <link rel="stylesheet" href="styles.css?v=2.0.2">
-  <script src="app.js?v=2.0.2" defer></script>
+  <link rel="stylesheet" href="styles.css?v=2.0.3">
+  <script src="app.js?v=2.0.3" defer></script>
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -86,6 +86,17 @@
         <div><p class="section-label">03 / INFRASTRUCTURE</p><h2>サーバー<span class="muted-word">稼働状況</span></h2><p class="section-description">サーバーのCPU・メモリ・ディスクなどの使用状況。外部に公開可能な集計値のみ掲載しています。</p></div>
       </div>
       <div class="server-grid" id="serverGrid"><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
+      <div class="server-history-block">
+        <div class="server-history-heading">
+          <div><h3>サーバーの稼働履歴</h3><p>過去90日間の監視結果。監視できなかった時間帯は「確認不可」として扱います。</p></div>
+          <div class="server-history-legend"><span><i class="legend-dot good"></i>正常を確認</span><span><i class="legend-dot nodata"></i>記録なし・確認不可</span></div>
+        </div>
+        <div class="surface history-panel">
+          <div class="history-header"><span>サーバー</span><span>直近90日（左: 過去 / 右: 現在）</span><span>正常確認率</span></div>
+          <div id="serverHistoryRows" class="history-rows"><p class="muted">サーバーの稼働履歴を取得しています。</p></div>
+          <div class="history-foot">* 正常確認率は監視開始後に正常応答が得られた回数の割合です。実際の24時間稼働率を保証するものではありません。監視開始前の日付はデータなしとして表示します。日付はUTC基準です。</div>
+        </div>
+      </div>
     </section>
     <section class="section history-section" id="history">
       <div class="section-heading">

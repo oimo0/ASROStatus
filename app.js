@@ -137,6 +137,30 @@ function renderServers(data){
       '<div class="server-unknown">メトリクスを取得できません。未取得の数値は表示していません。</div>')+'</article>';
   }).join(''):'<div class="no-results">サーバー監視データを取得中です。</div>';
 }
+function renderServerHistory(data){
+  const servers=Array.isArray(data.servers)?[...data.servers].sort((a,b)=>({main:0,management:1}[a.id]??99)-({main:0,management:1}[b.id]??99)):[];
+  const history=data.serverHistory||{};
+  if(!servers.length){
+    $('serverHistoryRows').innerHTML='<div class="no-results">サーバー監視データを取得できません。</div>';
+    return;
+  }
+  $('serverHistoryRows').innerHTML=servers.map(server=>{
+    const name=server.id==='main'?'サーバー1':server.id==='management'?'サーバー2':server.name;
+    const h=history[server.id]||{};
+    const days=Array.isArray(h.days)?h.days:[];
+    const byDate=new Map(days.map(day=>[day.date,day]));
+    const cells=Array.from({length:90},(_,i)=>{
+      const date=daysBefore(89-i);
+      const day=byDate.get(date);
+      const state=day && day.state==='operational'?'operational':'unknown';
+      const detail=!day?'監視記録なし':(day.healthyChecks||0)+'回正常 / '+(day.unknownChecks||0)+'回確認不可';
+      return '<span class="uptime-cell '+state+'" role="img" aria-label="'+safe(date+' '+detail)+'" title="'+safe(date+' · '+detail)+'"></span>';
+    }).join('');
+    const rate=Number.isFinite(h.observedPercent)?h.observedPercent.toFixed(2)+'%':'—';
+    const subtitle=h.firstObservedAt?'監視開始 '+prettyDate(h.firstObservedAt):'監視記録なし';
+    return '<div class="history-row server-history-row"><span class="history-name">'+safe(name)+'<small>'+safe(subtitle)+'</small></span><div class="uptime-heatmap">'+cells+'</div><span class="uptime-number">'+safe(rate)+'</span></div>';
+  }).join('');
+}
 function daysBefore(n){const d=new Date();d.setUTCHours(0,0,0,0);d.setUTCDate(d.getUTCDate()-n);return d.toISOString().slice(0,10)}
 function renderHistory(data,items){
   const history=data.history||{};
@@ -161,6 +185,7 @@ function render(data, stale=false){
   renderServices(data,items);
   renderIncidents(data,items);
   renderServers(data);
+  renderServerHistory(data);
   renderHistory(data,items);
 }
 async function fetchNotices(){
@@ -215,6 +240,7 @@ async function refresh(){
       document.querySelector('.overview-card').dataset.status='unknown';
       $('serviceGrid').innerHTML='<div class="no-results">取得できる稼働情報がありません。</div>';
       $('serverGrid').innerHTML='<div class="no-results">監視データを取得できません。</div>';
+      $('serverHistoryRows').innerHTML='<div class="no-results">サーバー稼働履歴を取得できません。</div>';
       $('historyRows').innerHTML='<div class="no-results">履歴データを取得できません。</div>';
       $('eventLog').innerHTML='<p class="muted">履歴を取得できません。</p>';
       $('activeIncidents').innerHTML='<p class="muted">状態を確認できません。</p>';
