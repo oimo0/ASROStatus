@@ -1,7 +1,8 @@
 /* ASRO Status 2.0 — public, read-only frontend. Never infer health from the website itself. */
 'use strict';
 const STATUS_URL = 'https://raw.githubusercontent.com/oimo0/ASROStatus/status-data/status.json';
-const REFRESH_MS = 60_000;
+const STATUS_REF_URL = 'https://api.github.com/repos/oimo0/ASROStatus/git/ref/heads/status-data';
+const REFRESH_MS = 120_000;
 const STALE_MS = 12 * 60_000;
 const STATES = {
   operational:{label:'正常',className:'operational',symbol:'✓'},
@@ -162,10 +163,28 @@ async function fetchNotices(){
     notices=Array.isArray(d.notices)?d.notices:[];
   }catch{notices=[]}
 }
+async function fetchLatestStatus(){
+  // GitHub raw may cache branch names for minutes. Resolve the newest immutable commit SHA first.
+  // Rate-limit/network failures gracefully fall back to the original public status endpoint.
+  try{
+    const refRes=await fetch(STATUS_REF_URL+'?t='+Date.now(),{cache:'no-store',headers:{'Accept':'application/vnd.github+json'}});
+    if(refRes.ok){
+      const ref=await refRes.json();
+      const sha=ref?.object?.sha;
+      if(typeof sha==='string' && /^[a-f0-9]{40}$/i.test(sha)){
+        try{
+          const snap=await fetch('https://raw.githubusercontent.com/oimo0/ASROStatus/'+sha+'/status.json',{cache:'no-store'});
+          if(snap.ok) return snap;
+        }catch{}
+      }
+    }
+  }catch{}
+  return fetch(STATUS_URL+'?t='+Date.now(),{cache:'no-store'});
+}
 async function refresh(){
   await fetchNotices();
   try{
-    const res=await fetch(STATUS_URL+'?t='+Date.now(),{cache:'no-store'});
+    const res=await fetchLatestStatus();
     if(!res.ok)throw Error('HTTP '+res.status);
     const data=await res.json();
     if(!Array.isArray(data.services)||!data.generatedAt)throw Error('データ形式の不一致');
