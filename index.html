@@ -8,8 +8,8 @@
   <meta property="og:title" content="ASRO Status — システム稼働状況">
   <title>ASRO Status | 稼働状況</title>
   <link rel="icon" type="image/svg+xml" href="assets/asro-mark.svg">
-  <link rel="stylesheet" href="styles.css?v=2.0.0">
-  <script src="app.js?v=2.0.1" defer></script>
+  <link rel="stylesheet" href="styles.css?v=2.0.2">
+  <script src="app.js?v=2.0.2" defer></script>
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -73,11 +73,11 @@
     </section>
     <section class="section" id="incidents">
       <div class="section-heading">
-        <div><p class="section-label">02 / EVENTS & MAINTENANCE</p><h2>インシデントと<span class="muted-word">メンテナンス</span></h2><p class="section-description">検知した障害・復旧履歴と、管理者によるメンテナンス設定を表示します。</p></div>
+        <div><p class="section-label">02 / EVENTS & MAINTENANCE</p><h2>インシデントと<span class="muted-word">メンテナンス</span></h2><p class="section-description">検知した障害・復旧履歴と、メンテナンスと意図的な一時停止の情報を表示します。</p></div>
       </div>
       <div class="event-grid">
         <div class="surface event-panel"><div class="panel-heading"><span class="panel-icon">!</span><h3>発生中のインシデント</h3><span class="panel-counter" id="activeIncidentCount">—</span></div><div id="activeIncidents" class="panel-body"><p class="muted">読み込み中...</p></div></div>
-        <div class="surface event-panel"><div class="panel-heading"><span class="panel-icon maintenance-symbol">⌁</span><h3>メンテナンス</h3><span class="panel-counter" id="activeMaintenanceCount">—</span></div><div id="maintenanceList" class="panel-body"><p class="muted">読み込み中...</p></div></div>
+        <div class="surface event-panel"><div class="panel-heading"><span class="panel-icon maintenance-symbol">⌁</span><h3>メンテナンス・一時停止</h3><span class="panel-counter" id="activeMaintenanceCount">—</span></div><div id="maintenanceList" class="panel-body"><p class="muted">読み込み中...</p></div></div>
       </div>
       <div class="surface activity-panel"><div class="panel-heading"><span class="panel-icon small-symbol">↗</span><h3>最近のステータス更新</h3><span class="panel-tail">EVENT LOG</span></div><div id="eventLog" class="activity-list"><p class="muted">更新履歴を取得しています。</p></div></div>
     </section>
@@ -90,9 +90,9 @@
     <section class="section history-section" id="history">
       <div class="section-heading">
         <div><p class="section-label">04 / RELIABILITY</p><h2>稼働<span class="muted-word">履歴</span></h2><p class="section-description">過去90日間の実測データ。監視開始前の期間はデータなしとして表示します。</p></div>
-        <div class="history-legend"><span><i class="legend-dot good"></i>正常</span><span><i class="legend-dot bad"></i>障害</span><span><i class="legend-dot maint"></i>メンテナンス</span><span><i class="legend-dot nodata"></i>データなし</span></div>
+        <div class="history-legend"><span><i class="legend-dot good"></i>正常</span><span><i class="legend-dot bad"></i>障害</span><span><i class="legend-dot maint"></i>メンテナンス</span><span><i class="legend-dot paused"></i>一時停止</span><span><i class="legend-dot nodata"></i>データなし</span></div>
       </div>
-      <div class="surface history-panel"><div class="history-header"><span>サービス</span><span>直近90日（左: 過去 / 右: 現在）</span><span>稼働率*</span></div><div id="historyRows" class="history-rows"><p class="muted">履歴を取得しています。</p></div><div class="history-foot">* 稼働率は計測開始後の記録に基づき算出。計画メンテナンス期間は計算から除外しています。監視データの欠損は稼働とみなしません。</div></div>
+      <div class="surface history-panel"><div class="history-header"><span>サービス</span><span>直近90日（左: 過去 / 右: 現在）</span><span>稼働率*</span></div><div id="historyRows" class="history-rows"><p class="muted">履歴を取得しています。</p></div><div class="history-foot">* 稼働率は計測開始後の記録に基づき算出。計画メンテナンス・意図的な一時停止の期間は計算から除外しています。監視データの欠損は稼働とみなしません。</div></div>
     </section>
     <aside class="info-strip"><span class="info-glyph">i</span><div><strong>ステータスの更新について</strong><p>このページは自動監視データを元に更新されます。Control Centerでメンテナンスを設定すると監視結果に自動反映されます。認証が必要な操作や、すべての内部処理を検査できるわけではありません。</p></div></aside>
   </main>

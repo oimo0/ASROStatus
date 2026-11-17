@@ -187,3 +187,9 @@ h1{font-size:clamp(30px,3.55vw,48px);font-weight:800;letter-spacing:-.065em;line
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 
 html[data-theme="light"] .brand-mark,html[data-theme="light"] .footer-brand img{filter:brightness(0)}
+
+.state-pill.paused{color:var(--amber);border-color:rgba(247,194,120,.28);background:rgba(247,194,120,.08)}
+.overview-card[data-status="paused"]{background:linear-gradient(110deg,#45351e,#34291b 52%,#211e1b);border-color:#8d6d36}
+.overview-card[data-status="paused"] .status-orb{color:#ffd391;background:rgba(241,173,76,.13);border-color:#8d6d36}
+.uptime-cell.paused,.legend-dot.paused{background:#d7aa73}
+.activity-dot.paused{background:var(--amber)}

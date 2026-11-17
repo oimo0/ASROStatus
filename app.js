@@ -9,6 +9,7 @@ const STATES = {
   busy:{label:'混雑',className:'busy',symbol:'·'},
   degraded:{label:'一部機能に問題',className:'degraded',symbol:'!'},
   maintenance:{label:'メンテナンス中',className:'maintenance',symbol:'⌁'},
+  paused:{label:'一時停止中',className:'paused',symbol:'Ⅱ'},
   outage:{label:'障害発生中',className:'outage',symbol:'!'},
   building:{label:'準備中',className:'building',symbol:'·'},
   unknown:{label:'確認できません',className:'unknown',symbol:'?'}
@@ -26,7 +27,7 @@ const readable = state => info(state).label;
 const pill = state => '<span class="state-pill '+safe(info(state).className)+'">'+safe(readable(state))+'</span>';
 let currentData=null, selectedFilter='all', notices=[];
 function effectiveState(service, noticeList){
-  if(service.state==='maintenance') return 'maintenance';
+  if(service.state==='maintenance' || service.state==='paused') return service.state;
   const match = noticeList.find(n=>noticeActive(n) && n.overrideStatus && Array.isArray(n.affected) && n.affected.includes(service.id));
   return match ? (STATES[match.overrideStatus]?match.overrideStatus:service.state) : service.state;
 }
@@ -39,6 +40,7 @@ function noticeActive(n){
 }
 function metricCode(check){
   if(check.state==='maintenance')return '計画停止';
+  if(check.state==='paused')return '一時停止中';
   if(check.state!=='operational')return check.httpCode ? 'HTTP '+safe(check.httpCode) : '失敗';
   if(Number.isFinite(check.latencyMs))return safe(check.latencyMs)+'ms';
   return check.httpCode ? 'HTTP '+safe(check.httpCode) : '正常';
@@ -53,10 +55,10 @@ function renderServices(data, items){
   target.innerHTML=filtered.map(s=>{
     let checks=Array.isArray(s.checks)?s.checks:[];
     const checksHtml=checks.length ? checks.map(c=>{
-      const failed=c.state==='outage',maint=c.state==='maintenance';
+      const failed=c.state==='outage',maint=c.state==='maintenance'||c.state==='paused';
       return '<li><span class="check-name"><span class="check-icon '+(failed?'bad':maint?'maint':'')+'">'+(failed?'!':maint?'–':'✓')+'</span>'+safe(c.label)+'</span><span class="check-result '+(failed?'bad':maint?'maint':'')+'" title="'+safe(c.message)+'">'+metricCode(c)+'</span></li>';
     }).join('') : '<li><span class="check-name">詳細チェックを収集中</span><span class="check-result">—</span></li>';
-    const message=s.effective==='maintenance' ? '<div class="maintenance-message">メンテナンス'+(s.maintenance?.reason?' · '+safe(s.maintenance.reason):'を実施中')+'</div>' : '';
+    const message=s.effective==='maintenance' ? '<div class="maintenance-message">メンテナンス'+(s.maintenance?.reason?' · '+safe(s.maintenance.reason):'を実施中')+'</div>' : s.effective==='paused' ? '<div class="maintenance-message">一時停止中'+(s.pause?.reason?' · '+safe(s.pause.reason):'')+'</div>' : '';
     return '<article class="service-card" data-state="'+safe(s.effective)+'">'+
       '<div class="service-top"><div class="service-title-wrap"><span class="service-icon" aria-hidden="true">'+(ICONS[s.id]||'▣')+'</span><div style="min-width:0"><div class="service-name">'+safe(s.name)+'</div><div class="service-desc">'+safe(s.description)+'</div></div></div>'+pill(s.effective)+'</div>'+
       '<div class="service-divider"></div><ul class="check-list">'+checksHtml+'</ul>'+message+
@@ -67,11 +69,14 @@ function renderOverall(data,items,stale){
   const healthy=items.filter(s=>s.effective==='operational').length;
   const incidents=items.filter(s=>s.effective==='outage'||s.effective==='degraded');
   const maintenance=items.filter(s=>s.effective==='maintenance');
+  const paused=items.filter(s=>s.effective==='paused');
   const uncertain=items.filter(s=>s.effective==='unknown'||s.effective==='building');
   let title,description,state;
   if(stale){title='監視データの更新が停止しています';description='最後に取得できた情報を表示しています。最新の稼働状況は確認できません。';state='unknown'}
   else if(incidents.length){title='一部のサービスで障害を検知';description=incidents.map(s=>s.name).join('、')+' の状態を確認してください。';state='outage'}
+  else if(maintenance.length&&paused.length){title='メンテナンス・一時停止中のサービスがあります';description=maintenance.map(s=>s.name).join('、')+' はメンテナンス中、'+paused.map(s=>s.name).join('、')+' は一時停止中です。';state='maintenance'}
   else if(maintenance.length){title='メンテナンス中のサービスがあります';description=maintenance.map(s=>s.name).join('、')+' はメンテナンス中です。';state='maintenance'}
+  else if(paused.length){title='一時停止中のサービスがあります';description=paused.map(s=>s.name).join('、')+' は意図的に一時停止されています。';state='paused'}
   else if(uncertain.length){title='一部の稼働状況を確認できません';description='監視経路に接続できないサービスがあります。';state='unknown'}
   else{title='すべてのサービスが正常に稼働中';description='現在、監視中のサービスに異常は検知されていません。';state='operational'}
   const root=document.querySelector('.overview-card');
@@ -90,15 +95,17 @@ function emptyBlock(title,desc){return '<div class="event-empty"><span class="ev
 function renderIncidents(data,items){
   const active=items.filter(s=>s.effective==='outage'||s.effective==='degraded');
   const maintenance=items.filter(s=>s.effective==='maintenance');
+  const paused=items.filter(s=>s.effective==='paused');
   $('activeIncidentCount').textContent=active.length;
-  $('activeMaintenanceCount').textContent=maintenance.length;
+  $('activeMaintenanceCount').textContent=maintenance.length+paused.length;
   $('activeIncidents').innerHTML=active.length?active.map(s=>{
     const failed=(s.checks||[]).filter(c=>c.state==='outage').map(c=>c.label);
     return '<div class="event-item warning"><div class="event-meta"><span>'+safe(s.name)+'</span>'+pill(s.effective)+'</div><strong>'+safe(readable(s.effective))+'</strong><p>'+(failed.length?'異常が検知された項目: '+safe(failed.join('、')):'現在の監視結果から障害が報告されています。')+'</p></div>';
   }).join(''):emptyBlock('現在、検知中の障害はありません','公開されている監視情報の範囲で正常です。');
   const scheduled=notices.filter(n=>noticeActive(n)&&/maint|メンテナンス/i.test(n.type||n.title||''));
-  $('maintenanceList').innerHTML=(maintenance.length||scheduled.length)?
+  $('maintenanceList').innerHTML=(maintenance.length||paused.length||scheduled.length)?
      maintenance.map(s=>'<div class="event-item maintenance"><div class="event-meta"><span>'+safe(s.name)+'</span>'+pill('maintenance')+'</div><strong>'+safe(s.name)+' のメンテナンス</strong><p>'+safe(s.maintenance?.reason||'メンテナンスを実施しています。')+'</p></div>').join('')+
+     paused.map(s=>'<div class="event-item maintenance"><div class="event-meta"><span>'+safe(s.name)+'</span>'+pill('paused')+'</div><strong>'+safe(s.name)+' は一時停止中</strong><p>'+safe(s.pause?.reason||'現在このサービスは意図的に停止しています。')+'</p></div>').join('')+
      scheduled.map(n=>'<div class="event-item maintenance"><div class="event-meta"><span>お知らせ</span><span>'+safe(prettyDate(n.startsAt))+'</span></div><strong>'+safe(n.title||'メンテナンス')+'</strong><p>'+safe(n.message||'')+'</p></div>').join(''):
      emptyBlock('現在、メンテナンスはありません','予定が登録されるとここに表示されます。');
   const events=Array.isArray(data.events)?data.events.slice(0,8):[];
@@ -120,11 +127,12 @@ function uptimeTime(seconds){
   return days+'日 '+hours+'時間';
 }
 function renderServers(data){
-  const servers=Array.isArray(data.servers)?data.servers:[];
+  const servers=Array.isArray(data.servers)?[...data.servers].sort((a,b)=>({main:0,management:1}[a.id]??99)-({main:0,management:1}[b.id]??99)):[];
   $('serverGrid').innerHTML=servers.length?servers.map(s=>{
     const connected=s.state==='operational';
+    const displayName=s.id==='main'?'サーバー1':s.id==='management'?'サーバー2':s.name;
     const values=[['CPU',s.cpu],['RAM',s.memory],['DISK',s.disk]];
-    return '<article class="server-card"><div class="server-card-top"><div class="server-identity"><span class="server-icon">▤</span><div><h3>'+safe(s.name)+'</h3><p>HOST MONITOR · '+safe(s.id).toUpperCase()+'</p></div></div>'+pill(connected?'operational':'unknown')+'</div>'+
+    return '<article class="server-card"><div class="server-card-top"><div class="server-identity"><span class="server-icon">▤</span><div><h3>'+safe(displayName)+'</h3><p>HOST MONITOR · '+safe(s.id).toUpperCase()+'</p></div></div>'+pill(connected?'operational':'unknown')+'</div>'+
      (connected?'<div class="metric-grid">'+values.map(([name,value])=>'<div class="metric-box"><span class="metric-label">'+name+'</span>'+progress(value)+'</div>').join('')+'</div><div class="server-bottom"><span>LOAD AVERAGE: '+(Number.isFinite(Number(s.load))?safe(s.load):'—')+'</span><span>UPTIME: '+uptimeTime(s.uptimeSeconds)+'</span></div>':
       '<div class="server-unknown">メトリクスを取得できません。未取得の数値は表示していません。</div>')+'</article>';
   }).join(''):'<div class="no-results">サーバー監視データを取得中です。</div>';
